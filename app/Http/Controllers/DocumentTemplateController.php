@@ -47,7 +47,7 @@ class DocumentTemplateController extends Controller
 
         $request->validate([
             'name' => 'required|min:3',
-            'file' => 'required|mimes:doc,docx,odt|max:204000',
+            'file' => 'required|mimes:doc,docx,odt,rtf|max:204000',
         ]);
 
         $file = $request->file('file');
@@ -61,9 +61,9 @@ class DocumentTemplateController extends Controller
             'name' => $request->name,
             'description' => $request->description,
             'user_id' => Auth::user()->id,
-            'path' => $path 
+            'path' => $path
         ]);
-        
+
         dd($documentTemplate);
 
     }
@@ -81,7 +81,7 @@ class DocumentTemplateController extends Controller
         }
 
         return view('document_templates.show', compact('documentTemplate'));
-        
+
     }
 
     /**
