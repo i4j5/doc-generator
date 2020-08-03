@@ -18,7 +18,7 @@ class CreateDocumentTemplatesTable extends Migration
             $table->integer('user_id');
             $table->text('name')->default(null);
             $table->text('description')->default(null);
-            $table->text('path')->default(null);
+            $table->text('file_name')->default(null);
             $table->timestamps();
         });
     }

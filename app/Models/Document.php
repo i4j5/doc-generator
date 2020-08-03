@@ -9,6 +9,6 @@ class Document extends Model
     protected $table = 'documents';
 
     protected $fillable = [
-        'user_id', 'description', 'path', 'name',
+        'user_id', 'description', 'file_name', 'name',
     ];
 }

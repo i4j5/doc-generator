@@ -47,7 +47,7 @@ class DocumentTemplateController extends Controller
 
         $request->validate([
             'name' => 'required|min:3',
-            'file' => 'required|mimes:doc,docx,odt,rtf|max:204000',
+            'file' => 'required|mimes:doc,docx|max:204000',
         ]);
 
         $file = $request->file('file');
@@ -55,13 +55,13 @@ class DocumentTemplateController extends Controller
         $user_id = Auth::user()->id;
         $file_name = md5(microtime() . rand(0, 9999)) . '.' . $file->getClientOriginalExtension();
 
-        $path = $request->file->storeAs("local/documents/$user_id/templates", $file_name);
+        $path = $request->file->storeAs(config('docs.path.templates') . $user_id, $file_name);
 
         $documentTemplate = DocumentTemplate::create([
             'name' => $request->name,
             'description' => $request->description,
             'user_id' => Auth::user()->id,
-            'path' => $path
+            'file_name' => $file_name 
         ]);
 
         dd($documentTemplate);

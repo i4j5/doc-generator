@@ -9,6 +9,6 @@ class DocumentTemplate extends Model
     protected $table = 'document_templates';
 
     protected $fillable = [
-        'user_id', 'description', 'path', 'name',
+        'user_id', 'description', 'file_name', 'name',
     ];
 }

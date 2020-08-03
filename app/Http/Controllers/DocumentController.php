@@ -58,19 +58,22 @@ class DocumentController extends Controller
             'template_id' => 'required',
         ]);
 
-        $templates = DocumentTemplate::find($request->template_id);
-
         $user_id = Auth::user()->id;
 
-        $documentPath = storage_path() . '/app/' . $templates->path;
+        $templates = DocumentTemplate::find($request->template_id);
+
+        $documentPath = storage_path('app') . config('docs.path.templates') . "$user_id/" . $templates->file_name;
 
         $ext = File::extension($documentPath);
 
         $file_name = md5(microtime() . rand(0, 9999)) . '.' . $ext;
 
-        $cachePath = storage_path() . '/app/local/cache/';
-        $templator = new Templator($cachePath);
+        $templator = new Templator(config('docs.path.cache'));
         $templator->debug = true;
+
+
+        // dd($documentPath);
+        
 
         $document = new WordDocument($documentPath);
 
@@ -80,14 +83,13 @@ class DocumentController extends Controller
 
         $result = $templator->render($document, $values);
 
-        $path = "local/documents/$user_id/documents/$file_name";
-        Storage::disk('local')->put($path, $result->output());
+        Storage::disk('local')->put(config('docs.path.docunents') . "$user_id/$file_name", $result->output());
 
         $document = Document::create([
             'name' => $request->name,
             'description' => $request->description,
             'user_id' => $user_id,
-            'path' => $path
+            'file_name' => $file_name 
         ]);
 
         dd($document);
