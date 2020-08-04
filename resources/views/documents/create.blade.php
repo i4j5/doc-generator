@@ -24,6 +24,11 @@
       </select>
     </div>
 
+    <div class="form-group">
+      <label for="description">JSON</label>
+      <textarea class="form-control" rows="8" name="json">{{ old('json') }}</textarea>
+    </div>
+
     @if ($errors->any())
       <div class="alert alert-danger">
       <ul>

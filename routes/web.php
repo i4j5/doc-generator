@@ -21,5 +21,10 @@ Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
+Route::get('document-templates/{document_template}/download', 'DocumentTemplateController@download');
 Route::resource('document-templates', 'DocumentTemplateController');
-Route::resource('documents', 'DocumentController');
+
+Route::get('documents/{document}/download', 'DocumentController@download');
+Route::resource('documents', 'DocumentController')->except([
+  'update', 'edit'
+]);

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use App\Models\DocumentTemplate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentTemplateController extends Controller
 {
@@ -64,7 +67,7 @@ class DocumentTemplateController extends Controller
             'file_name' => $file_name 
         ]);
 
-        dd($documentTemplate);
+        return redirect('document-templates/' . $documentTemplate->id);
 
     }
 
@@ -109,7 +112,32 @@ class DocumentTemplateController extends Controller
      */
     public function update(Request $request, DocumentTemplate $documentTemplate)
     {
-        //
+        $request->validate([
+            'name' => 'required|min:3',
+            'file' => 'mimes:doc,docx|max:204000',
+        ]);
+
+        $user_id = Auth::user()->id;
+
+        if ($documentTemplate->user_id != $user_id ) {
+            return redirect('document-templates');
+        }
+
+        $documentTemplate->name = $request->name;
+        $documentTemplate->description = $request->description;
+
+        $file = $request->file('file');
+        if ($file) {
+            $file_name = md5(microtime() . rand(0, 9999)) . '.' . $file->getClientOriginalExtension();
+            File::Delete(storage_path('app') . config('docs.path.templates') . "$user_id/" . $documentTemplate->file_name);
+            $path = $request->file->storeAs(config('docs.path.templates') . $user_id, $file_name);
+            $documentTemplate->file_name = $file_name;
+        }
+        
+
+        $documentTemplate->save();
+
+        return redirect('document-templates/' . $documentTemplate->id);
     }
 
     /**
@@ -120,7 +148,30 @@ class DocumentTemplateController extends Controller
      */
     public function destroy(DocumentTemplate $documentTemplate)
     {
-        $documentTemplate->delete();
-        return redirect('');
+        $user_id = Auth::user()->id;
+
+        if ($documentTemplate->user_id === $user_id) {
+            File::Delete(storage_path('app') . config('docs.path.templates') . "$user_id/" . $documentTemplate->file_name);
+            $documentTemplate->delete();
+        }
+
+        return redirect('document-templates');
+    }
+
+    public function download(Request $request, DocumentTemplate $documentTemplate)
+    {
+
+        $user_id = Auth::user()->id;
+
+        if (!$documentTemplate) abort(404);
+        if ($user_id != $documentTemplate->user_id) abort(403);
+
+        $path = config('docs.path.templates') . "$user_id/" . $documentTemplate->file_name;
+
+        if (!Storage::exists($path)) abort(404);
+
+        return 
+            (new Response(Storage::get($path)))
+                ->header('Content-Type', Storage::mimeType($path));
     }
 }

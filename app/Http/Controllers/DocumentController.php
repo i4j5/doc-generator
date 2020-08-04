@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
-use App\Models\DocumentTemplate;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
-
 use PHPStamp\Templator;
+use App\Models\Document;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+use App\Models\DocumentTemplate;
 use PHPStamp\Document\WordDocument;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
@@ -71,15 +72,13 @@ class DocumentController extends Controller
         $templator = new Templator(config('docs.path.cache'));
         $templator->debug = true;
 
-
-        // dd($documentPath);
-        
-
         $document = new WordDocument($documentPath);
 
-        $values = [
-            'title' => 'ffffffffffffff'
-        ];
+        $json = json_decode($request->json, true);
+
+        $values = $json ? $json : [];
+
+        // dd($values, $document);
 
         $result = $templator->render($document, $values);
 
@@ -92,7 +91,7 @@ class DocumentController extends Controller
             'file_name' => $file_name 
         ]);
 
-        dd($document);
+        return redirect('documents/' . $document->id);
     }
 
     /**
@@ -116,21 +115,22 @@ class DocumentController extends Controller
      * @param  \App\Models\Document  $document
      * @return \Illuminate\Http\Response
      */
-    public function edit(Document $document)
+  
+    public function download(Request $request, Document $document)
     {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Document  $document
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Document $document)
-    {
-        //
+        $user_id = Auth::user()->id;
+
+        if (!$document) abort(404);
+        if ($user_id != $document->user_id) abort(403);
+
+        $path = config('docs.path.docunents') . "$user_id/" . $document->file_name;
+
+        if (!Storage::exists($path)) abort(404);
+
+        return 
+            (new Response(Storage::get($path)))
+                ->header('Content-Type', Storage::mimeType($path));
     }
 
     /**
@@ -141,7 +141,14 @@ class DocumentController extends Controller
      */
     public function destroy(Document $document)
     {
-        $document->delete();
+
+        $user_id = Auth::user()->id;
+
+        if ($document->user_id === $user_id) {
+            File::Delete(storage_path('app') . config('docs.path.docunents') . "$user_id/" . $document->file_name);
+            $document->delete();
+        }
+
         return redirect('documents');
     }
 }
