@@ -78,8 +78,6 @@ class DocumentController extends Controller
 
         $values = $json ? $json : [];
 
-        // dd($values, $document);
-
         $result = $templator->render($document, $values);
 
         Storage::disk('local')->put(config('docs.path.docunents') . "$user_id/$file_name", $result->output());

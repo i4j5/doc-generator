@@ -8,6 +8,7 @@ use App\Models\DocumentTemplate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class DocumentTemplateController extends Controller
 {
@@ -48,12 +49,21 @@ class DocumentTemplateController extends Controller
     public function store(Request $request)
     {
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
-            'file' => 'required|mimes:doc,docx|max:204000',
+            'file' => 'required|max:204000',
         ]);
 
+        $validator->validate();
+       
         $file = $request->file('file');
+
+        if ($file->getMimeType() != 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            $validator->errors()->add('file', 'Шаблон должен быть создан в Microsoft Word');
+            return redirect('document-templates/create')
+                        ->withErrors($validator)
+                        ->withInput();
+        }
 
         $user_id = Auth::user()->id;
         $file_name = md5(microtime() . rand(0, 9999)) . '.' . $file->getClientOriginalExtension();
@@ -112,10 +122,12 @@ class DocumentTemplateController extends Controller
      */
     public function update(Request $request, DocumentTemplate $documentTemplate)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
-            'file' => 'mimes:doc,docx|max:204000',
+            'file' => 'required|max:204000',
         ]);
+
+        $validator->validate();
 
         $user_id = Auth::user()->id;
 
@@ -128,6 +140,14 @@ class DocumentTemplateController extends Controller
 
         $file = $request->file('file');
         if ($file) {
+
+            if ($file->getMimeType() != 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                $validator->errors()->add('file', 'Шаблон должен быть создан в Microsoft Word');
+                return redirect("document-templates/$documentTemplate->id/edit")
+                            ->withErrors($validator)
+                            ->withInput();
+            }
+
             $file_name = md5(microtime() . rand(0, 9999)) . '.' . $file->getClientOriginalExtension();
             File::Delete(storage_path('app') . config('docs.path.templates') . "$user_id/" . $documentTemplate->file_name);
             $path = $request->file->storeAs(config('docs.path.templates') . $user_id, $file_name);
