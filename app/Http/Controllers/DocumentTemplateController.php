@@ -190,8 +190,11 @@ class DocumentTemplateController extends Controller
 
         if (!Storage::exists($path)) abort(404);
 
-        return 
-            (new Response(Storage::get($path)))
-                ->header('Content-Type', Storage::mimeType($path));
+        return response()->download(storage_path('app') . $path);
+
+        // return 
+        //     (new Response(Storage::get($path)))
+        //         ->header('Content-Type', Storage::mimeType($path))
+        //         ->header('Content-Length', Storage::size($path));
     }
 }
